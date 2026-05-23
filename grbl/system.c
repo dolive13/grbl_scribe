@@ -133,7 +133,7 @@ uint8_t system_execute_line(char *line)
       if(line[2] != '=') { return(STATUS_INVALID_STATEMENT); }
       return(gc_execute_line(line)); // NOTE: $J= is ignored inside g-code parser and used to detect jog motions.
       break;
-    case '$': case 'G': case 'C': case 'X':
+    case '$': case 'G': case 'C': case 'X': case 'Z':
       if ( line[2] != 0 ) { return(STATUS_INVALID_STATEMENT); }
       switch( line[1] ) {
         case '$' : // Prints Grbl settings
@@ -166,6 +166,16 @@ uint8_t system_execute_line(char *line)
             // Don't run startup script. Prevents stored moves in startup from causing accidents.
           } // Otherwise, no effect.
           break;
+
+        // ── Z RESET BLOCK ──────────────────────────────────────────────────────────
+        case 'Z' : // Reset Z axis machine position to zero [IDLE/ALARM]
+          if (line[2] != 0) { return(STATUS_INVALID_STATEMENT); }
+          sys_position[Z_AXIS] = 0;
+          gc_sync_position();
+          report_feedback_message(MESSAGE_ALARM_UNLOCK); // reuse "Unlocked" message
+          break;
+        // ────────────────────────────────────────────────────────────────────────────
+
       }
       break;
     default :
